@@ -37,3 +37,19 @@ This is the standard CloudEvents HTTP transport, in binary mode.
 The emitter uses the following environment variables:
 
 - `K_SINK` (required): The URL of the CloudEvents endpoint that will receive the events.
+
+### google-pubsub
+
+This transport doesn't actually use CloudEvents at all -- it simply converts the CloudEvent to a [Google PubSub](https://cloud.google.com/pubsub) message and vice versa. Fields between the two formats are mapped as follows:
+
+| CloudEvent field | PubSub field  |
+|------------------|---------------|
+| `id`             | `messageId`   |
+| `time`           | `publishTime` |
+| `data`           | `data`        |
+
+All other CloudEvents fields, including extensions, are mapped to PubSub attributes with the same name.
+
+The emitter uses the following environment variables:
+
+- `CE_GPUBSUB_TOPIC` (required): The PubSub topic where messages are published.
