@@ -37,7 +37,9 @@
     "node": ">=18"
   },
   "dependencies": {
-    "cloudevents": "^7.0.1",
+    "@google-cloud/pubsub": "^3.7.1",
+    "cloudevents": "< 8",
+    "date-fns": "^2.30.0",
     "env-var": "^7.3.1"
   },
   "devDependencies": {
