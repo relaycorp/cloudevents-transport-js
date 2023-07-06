@@ -3,6 +3,7 @@
 This is a Node.js library to send/receive [CloudEvents](https://cloudevents.io) over the following transports:
 
 - [CloudEvents, HTTP binary mode](#ce-http-binary).
+- [Google PubSub](#google-pubsub).
 
 ## Emitters
 
