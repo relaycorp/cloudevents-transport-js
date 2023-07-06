@@ -9,7 +9,7 @@ const { makeEmitter } = await import('./emitters.js');
 
 describe('makeEmitter', () => {
   test('CloudEvents binary emitter should be returned if requested', () => {
-    expect(makeEmitter('cloudevents')).toBe(mockCeBinaryEmitter);
+    expect(makeEmitter('ce-http-binary')).toBe(mockCeBinaryEmitter);
   });
 
   test('Unsupported emitter type should be refused', () => {
