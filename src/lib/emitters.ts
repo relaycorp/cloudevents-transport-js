@@ -1,22 +1,19 @@
 import type { EmitterFunction } from 'cloudevents';
 
-import { makeCeBinaryEmitter } from './ceBinary.js';
-import { makeGooglePubSubEmitter } from './googlePubSub.js';
-
 type EmitterMaker = () => EmitterFunction;
 
-const EMITTER_MAKER_BY_TRANSPORT: { [type: string]: EmitterMaker } = {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  'ce-http-binary': makeCeBinaryEmitter,
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  'google-pubsub': makeGooglePubSubEmitter,
-};
-
-export function makeEmitter(transport: string): EmitterFunction {
-  const emitterFunction = EMITTER_MAKER_BY_TRANSPORT[transport] as EmitterMaker | undefined;
-  if (emitterFunction !== undefined) {
-    return emitterFunction();
+export async function makeEmitter(transport: string): Promise<EmitterFunction> {
+  // Avoid import-time side effects (e.g., expensive API calls) by loading emitter functions lazily
+  let emitterFunction: EmitterMaker;
+  if (transport === 'ce-http-binary') {
+    const { makeCeBinaryEmitter } = await import('./ceBinary.js');
+    emitterFunction = makeCeBinaryEmitter;
+  } else if (transport === 'google-pubsub') {
+    const { makeGooglePubSubEmitter } = await import('./googlePubSub.js');
+    emitterFunction = makeGooglePubSubEmitter;
+  } else {
+    throw new Error(`Unsupported emitter type (${transport})`);
   }
 
-  throw new Error(`Unsupported emitter type (${transport})`);
+  return emitterFunction();
 }

@@ -14,7 +14,7 @@ import type { EmitterFunction } from 'cloudevents';
 import { makeEmitter } from '@relaycorp/cloudevents-transport';
 
 const transport = process.env.CE_TRANSPORT_NAME ?? 'ce-http-binary';
-const emitter: EmitterFunction = makeEmitter(transport);
+const emitter: EmitterFunction = await makeEmitter(transport);
 ```
 
 Then the `emitter` can be used as a regular `EmitterFunction` from the [`cloudevents`](https://www.npmjs.com/package/cloudevents) library. For example:
