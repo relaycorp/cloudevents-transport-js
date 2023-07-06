@@ -20,9 +20,8 @@
     "google-pubsub"
   ],
   "scripts": {
-    "build": "run-s clean && run-p build:*",
+    "build": "run-s clean && run-p build:main",
     "build:main": "tsc -p tsconfig.json",
-    "build:module": "tsc -p tsconfig.module.json",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:eslint": "eslint -c .eslintrc.cjs --fix src",
@@ -38,9 +37,11 @@
     "node": ">=18"
   },
   "dependencies": {
+    "cloudevents": "^7.0.1",
     "env-var": "^7.3.1"
   },
   "devDependencies": {
+    "@jest/globals": "^29.6.0",
     "@relaycorp/eslint-config": "^1.1.98",
     "@relaycorp/shared-config": "^1.9.4",
     "@types/jest": "^29.5.2",
@@ -54,6 +55,9 @@
     "ts-node": "^10.9.1",
     "typedoc": "^0.24.7",
     "typescript": "^5.0.4"
+  },
+  "peerDependencies": {
+    "cloudevents": "< 8"
   },
   "prettier": "@relaycorp/shared-config/.prettierrc.json",
   "publishConfig": {
