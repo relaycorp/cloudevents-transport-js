@@ -1,9 +1,7 @@
 *
 
-!build/main/**
-build/main/testUtils
-!build/module/**
-build/modules/testUtils
+!build/lib/**
+build/lib/testUtils
 *.spec.js*
 
 !LICENSE
