@@ -33,11 +33,11 @@ describe('makeEmitter', () => {
     expect(wasGooglePubSubImported).toBeTrue();
   });
 
-  test('CloudEvents binary transport should be returned if requested', async () => {
+  test('CloudEvents binary emitter should be returned if requested', async () => {
     await expect(makeEmitter('ce-http-binary')).resolves.toBe(mockCeBinaryEmitter);
   });
 
-  test('Google PubSub transport should be returned if requested', async () => {
+  test('Google PubSub emitter should be returned if requested', async () => {
     await expect(makeEmitter('google-pubsub')).resolves.toBe(mockGooglePubSubEmitter);
   });
 

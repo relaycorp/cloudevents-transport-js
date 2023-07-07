@@ -4,3 +4,6 @@
 // call APIs).
 
 export { makeEmitter } from './lib/emitters.js';
+
+export { makeReceiver } from './lib/receivers.js';
+export type { Receiver } from './lib/Receiver.js';

@@ -30,6 +30,49 @@ const event = new CloudEvent({
 await emitter(event);
 ```
 
+## Receivers
+
+To create a receiver, simply pass the name of the transport to the `makeReceiver` function. For example:
+
+```typescript
+import { makeReceiver } from '@relaycorp/cloudevents-transport';
+
+const transport = process.env.CE_TRANSPORT_NAME ?? 'ce-http-binary';
+const receiver = await makeReceiver(transport);
+```
+
+Then the `receiver` can be used to convert [`cloudevents`](https://www.npmjs.com/package/cloudevents) `Message`s to `CloudEventV1`s. For example, using [Fastify](https://fastify.dev):
+
+```typescript
+import { makeReceiver } from '@relaycorp/cloudevents-transport';
+import type { CloudEventV1, Message } from 'cloudevents';
+import type { FastifyInstance, FastifyPluginOptions } from 'fastify';
+
+export async function registerEventReceiver(server: FastifyInstance): Promise<void> {
+  // Accept any content type
+  server.removeAllContentTypeParsers();
+  server.addContentTypeParser('*', { parseAs: 'buffer' }, (_request, payload, next) => {
+    next(null, payload);
+  });
+
+  // Initialise the receiver once and reuse it across requests
+  const transport = process.env.CE_TRANSPORT_NAME ?? 'ce-http-binary';
+  const convertMessageToEvent = await makeReceiver(transport);
+
+  server.post('/', async (request, reply) => {
+    const message: Message = { headers: request.headers, body: request.body };
+    let event: CloudEventV1<Buffer>;
+    try {
+      event = convertMessageToEvent(message);
+    } catch (err) {
+      return reply.status(400).send({ reason: err.message });
+    }
+
+    return reply.status(200).send({ eventId: event.id });
+  });
+}
+```
+
 ## Supported transports
 
 ### ce-http-binary
@@ -54,4 +97,4 @@ All other CloudEvents fields, including extensions, are mapped to PubSub attribu
 
 The emitter uses the following environment variables:
 
-- `CE_GPUBSUB_TOPIC` (required): The PubSub topic where messages are published.
+- `CE_GPUBSUB_TOPIC` (required): The PubSub topic where messages are to be published.
