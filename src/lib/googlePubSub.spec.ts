@@ -1,10 +1,11 @@
 import { jest } from '@jest/globals';
-import { CloudEvent } from 'cloudevents';
+import type { CloudEvent } from 'cloudevents';
 import { formatISO, getUnixTime, setMilliseconds } from 'date-fns';
 import envVar from 'env-var';
 
 import { configureMockEnvVars } from '../testUtils/envVars.js';
 import { mockSpy } from '../testUtils/jest.js';
+import { EVENT } from '../testUtils/stubs.js';
 
 const mockPublishMessage = mockSpy(jest.fn<any>().mockResolvedValue(undefined));
 const mockTopic = jest.fn<any>().mockReturnValue({ publishMessage: mockPublishMessage });
@@ -15,14 +16,6 @@ jest.unstable_mockModule('@google-cloud/pubsub', () => ({
   }),
 }));
 const { makeGooglePubSubEmitter } = await import('./googlePubSub.js');
-
-const EVENT = new CloudEvent({
-  id: 'the id',
-  source: 'https://example.com',
-  type: 'com.example',
-  data: Buffer.from('data'),
-  datacontenttype: 'application/vnd.example',
-});
 
 const CE_GPUBSUB_TOPIC = 'the topic';
 const mockEnvVars = configureMockEnvVars({ CE_GPUBSUB_TOPIC });

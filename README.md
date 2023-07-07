@@ -54,4 +54,4 @@ All other CloudEvents fields, including extensions, are mapped to PubSub attribu
 
 The emitter uses the following environment variables:
 
-- `CE_GPUBSUB_TOPIC` (required): The PubSub topic where messages are published.
+- `CE_GPUBSUB_TOPIC` (required): The PubSub topic where messages are to be published.
