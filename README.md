@@ -45,7 +45,7 @@ Then the `receiver` can be used to convert [`cloudevents`](https://www.npmjs.com
 
 ```typescript
 import { makeReceiver } from '@relaycorp/cloudevents-transport';
-import type { CloudEventV1, Message } from 'cloudevents';
+import type { CloudEventV1 } from 'cloudevents';
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify';
 
 export async function registerEventReceiver(server: FastifyInstance): Promise<void> {
@@ -60,10 +60,9 @@ export async function registerEventReceiver(server: FastifyInstance): Promise<vo
   const convertMessageToEvent = await makeReceiver(transport);
 
   server.post('/', async (request, reply) => {
-    const message: Message = { headers: request.headers, body: request.body };
     let event: CloudEventV1<Buffer>;
     try {
-      event = convertMessageToEvent(message);
+      event = convertMessageToEvent(request.headers, request.body);
     } catch (err) {
       return reply.status(400).send({ reason: err.message });
     }
