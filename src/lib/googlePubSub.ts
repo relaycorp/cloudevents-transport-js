@@ -1,4 +1,4 @@
-import type { CloudEvent, EmitterFunction } from 'cloudevents';
+import type { CloudEvent, EmitterFunction, type CloudEventV1, type Headers } from 'cloudevents';
 import { PubSub } from '@google-cloud/pubsub';
 import { google } from '@google-cloud/pubsub/build/protos/protos.js';
 import { getUnixTime } from 'date-fns';
@@ -72,4 +72,8 @@ export function makeGooglePubSubEmitter(): EmitterFunction {
     const message = convertEventToMessage(event);
     await topic.publishMessage(message);
   };
+}
+
+export function convertGooglePubSubMessage(headers: Headers, body: Buffer): CloudEventV1<Buffer> {
+  throw new Error(`Not implemented${headers}${body}`);
 }

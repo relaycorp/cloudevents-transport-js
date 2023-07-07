@@ -6,6 +6,9 @@ export async function makeReceiver(transport: string): Promise<Receiver> {
   if (transport === 'ce-http-binary') {
     const { convertCeBinaryMessage } = await import('./ceBinary.js');
     receiver = convertCeBinaryMessage;
+  } else if (transport === 'google-pubsub') {
+    const { convertGooglePubSubMessage } = await import('./googlePubSub.js');
+    receiver = convertGooglePubSubMessage;
   } else {
     throw new Error(`Unsupported receiver type (${transport})`);
   }
