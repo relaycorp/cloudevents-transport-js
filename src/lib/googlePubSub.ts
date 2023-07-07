@@ -1,8 +1,10 @@
-import type { CloudEvent, CloudEventV1, EmitterFunction, Headers } from 'cloudevents';
 import { PubSub } from '@google-cloud/pubsub';
 import { google } from '@google-cloud/pubsub/build/protos/protos.js';
+import { CloudEvent, type CloudEventV1, type EmitterFunction, type Headers } from 'cloudevents';
 import { getUnixTime } from 'date-fns';
 import envVar from 'env-var';
+
+import { compileSchema } from '../utils/ajv.js';
 
 import IPubsubMessage = google.pubsub.v1.IPubsubMessage;
 
@@ -20,6 +22,42 @@ const CE_BUILTIN_ATTRS = [
   'dataschema',
   ...CE_DATA_ATTRS,
 ];
+
+const pubSubBody = {
+  type: 'object',
+
+  properties: {
+    message: {
+      type: 'object',
+
+      properties: {
+        attributes: {
+          type: 'object',
+
+          properties: {
+            specversion: { type: 'string' },
+            source: { type: 'string' },
+            type: { type: 'string' },
+            subject: { type: 'string' },
+            datacontenttype: { type: 'string' },
+            dataschema: { type: 'string' },
+          },
+
+          required: ['source', 'type'],
+        },
+
+        data: { type: 'string' },
+        messageId: { type: 'string' },
+        publishTime: { type: 'string' },
+      },
+
+      required: ['attributes', 'data', 'messageId', 'publishTime'],
+    },
+  },
+
+  required: ['message'],
+} as const;
+const isPubSubBody = compileSchema(pubSubBody);
 
 function convertData(event: CloudEvent<unknown>): Buffer | string {
   if (event.data instanceof Buffer || typeof event.data === 'string') {
@@ -44,14 +82,17 @@ function suppressUndefined(obj: { [key: string]: string | undefined }): { [key: 
     .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
 }
 
-function getMessageAttributesFromEvent(event: CloudEvent<unknown>) {
-  const attributeEntries = Object.entries(event);
-  const ceAttributes = attributeEntries
-    .filter(([key]) => CE_BUILTIN_ATTRS.includes(key) && !CE_DATA_ATTRS.includes(key))
-    .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
-  const extensionAttributes = attributeEntries
+function filterExtensionAttributes(obj: { [key: string]: unknown }) {
+  return Object.entries(obj)
     .filter(([key]) => !CE_BUILTIN_ATTRS.includes(key))
     .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+}
+
+function getMessageAttributesFromEvent(event: CloudEvent<unknown>) {
+  const ceAttributes = Object.entries(event)
+    .filter(([key]) => CE_BUILTIN_ATTRS.includes(key) && !CE_DATA_ATTRS.includes(key))
+    .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+  const extensionAttributes = filterExtensionAttributes(event);
   return suppressUndefined({ ...ceAttributes, ...extensionAttributes });
 }
 
@@ -75,6 +116,31 @@ export function makeGooglePubSubEmitter(): EmitterFunction {
   };
 }
 
-export function convertGooglePubSubMessage(headers: Headers, body: Buffer): CloudEventV1<Buffer> {
-  throw new Error(`Not implemented${headers}${body}`);
+export function convertGooglePubSubMessage(_headers: Headers, body: Buffer): CloudEventV1<Buffer> {
+  const bodyString = body.toString();
+  let bodyJson: unknown;
+  try {
+    bodyJson = JSON.parse(bodyString);
+  } catch {
+    throw new Error('Request body is not valid JSON');
+  }
+
+  if (isPubSubBody(bodyJson)) {
+    const { message } = bodyJson;
+    const extensionAttributes = filterExtensionAttributes(message.attributes);
+    return new CloudEvent<Buffer>({
+      specversion: message.attributes.specversion,
+      id: message.messageId,
+      source: message.attributes.source,
+      type: message.attributes.type,
+      subject: message.attributes.subject,
+      time: message.publishTime,
+      datacontenttype: message.attributes.datacontenttype,
+      dataschema: message.attributes.dataschema,
+      data: Buffer.from(message.data, 'base64'),
+      ...extensionAttributes,
+    });
+  }
+
+  throw new Error('Request body is not a valid PubSub message');
 }

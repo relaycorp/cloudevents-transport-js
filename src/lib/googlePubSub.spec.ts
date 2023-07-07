@@ -6,6 +6,7 @@ import envVar from 'env-var';
 import { configureMockEnvVars } from '../testUtils/envVars.js';
 import { mockSpy } from '../testUtils/jest.js';
 import { EVENT } from '../testUtils/stubs.js';
+import { jsonSerialise } from '../testUtils/json.js';
 
 const mockPublishMessage = mockSpy(jest.fn<any>().mockResolvedValue(undefined));
 const mockTopic = jest.fn<any>().mockReturnValue({ publishMessage: mockPublishMessage });
@@ -15,7 +16,7 @@ jest.unstable_mockModule('@google-cloud/pubsub', () => ({
     topic: mockTopic,
   }),
 }));
-const { makeGooglePubSubEmitter } = await import('./googlePubSub.js');
+const { makeGooglePubSubEmitter, convertGooglePubSubMessage } = await import('./googlePubSub.js');
 
 const CE_GPUBSUB_TOPIC = 'the topic';
 const mockEnvVars = configureMockEnvVars({ CE_GPUBSUB_TOPIC });
@@ -219,4 +220,220 @@ describe('makeGooglePubSubEmitter', () => {
 
     expect(mockTopic).toHaveBeenCalledWith(CE_GPUBSUB_TOPIC);
   });
+});
+
+describe('convertGooglePubSubMessage', () => {
+  const headers = {};
+
+  const requestBody = {
+    message: {
+      data: EVENT.data_base64!,
+      messageId: EVENT.id,
+      publishTime: EVENT.time!,
+
+      attributes: {
+        type: EVENT.type,
+        source: EVENT.source,
+      },
+    },
+
+    subscription: 'projects/myproject/subscriptions/mysubscription',
+  };
+  const requestBodySerialised = jsonSerialise(requestBody);
+
+  function copyBodyWithAttribute(attribute: string, value: string | undefined): Buffer {
+    const body = {
+      ...requestBody,
+
+      message: {
+        ...requestBody.message,
+        attributes: { ...requestBody.message.attributes, [attribute]: value },
+      },
+    };
+    return jsonSerialise(body);
+  }
+
+  test('Request body should be refused if it is malformed JSON', () => {
+    expect(() => convertGooglePubSubMessage(headers, Buffer.from('malformed'))).toThrowWithMessage(
+      Error,
+      'Request body is not valid JSON',
+    );
+  });
+
+  test('Request body should be refused if message field is missing', () => {
+    const invalidRequestBody = { ...requestBody, message: undefined };
+    const invalidRequestBodySerialised = jsonSerialise(invalidRequestBody);
+
+    expect(() =>
+      convertGooglePubSubMessage(headers, invalidRequestBodySerialised),
+    ).toThrowWithMessage(Error, 'Request body is not a valid PubSub message');
+  });
+
+  describe('Id', () => {
+    test('Should be taken from messageId', () => {
+      const event = convertGooglePubSubMessage(headers, requestBodySerialised);
+
+      expect(event.id).toBe(requestBody.message.messageId);
+    });
+
+    test('Message should be refused if messageId is missing', () => {
+      const invalidRequestBody = {
+        ...requestBody,
+        message: { ...requestBody.message, messageId: undefined },
+      };
+      const invalidRequestBodySerialised = jsonSerialise(invalidRequestBody);
+
+      expect(() =>
+        convertGooglePubSubMessage(headers, invalidRequestBodySerialised),
+      ).toThrowWithMessage(Error, 'Request body is not a valid PubSub message');
+    });
+  });
+
+  describe('Time', () => {
+    test('Should be taken from publishTime', () => {
+      const event = convertGooglePubSubMessage(headers, requestBodySerialised);
+
+      expect(event.time).toBe(requestBody.message.publishTime);
+    });
+
+    test('Message should be refused if publishTime is missing', () => {
+      const invalidRequestBody = {
+        ...requestBody,
+        message: { ...requestBody.message, publishTime: undefined },
+      };
+      const invalidRequestBodySerialised = jsonSerialise(invalidRequestBody);
+
+      expect(() =>
+        convertGooglePubSubMessage(headers, invalidRequestBodySerialised),
+      ).toThrowWithMessage(Error, 'Request body is not a valid PubSub message');
+    });
+  });
+
+  describe('Data', () => {
+    test('Should be taken from data', () => {
+      const event = convertGooglePubSubMessage(headers, requestBodySerialised);
+
+      expect(event.data).toMatchObject(EVENT.data!);
+    });
+
+    test('Message should be refused if data is missing', () => {
+      const invalidRequestBody = {
+        ...requestBody,
+        message: { ...requestBody.message, data: undefined },
+      };
+      const invalidRequestBodySerialised = jsonSerialise(invalidRequestBody);
+
+      expect(() =>
+        convertGooglePubSubMessage(headers, invalidRequestBodySerialised),
+      ).toThrowWithMessage(Error, 'Request body is not a valid PubSub message');
+    });
+  });
+
+  test('Event type should be taken from type attribute', () => {
+    const event = convertGooglePubSubMessage(headers, requestBodySerialised);
+
+    expect(event.type).toBe(EVENT.type);
+  });
+
+  test('Event source should be taken from source attribute', () => {
+    const event = convertGooglePubSubMessage(headers, requestBodySerialised);
+
+    expect(event.source).toBe(EVENT.source);
+  });
+
+  describe('Spec version', () => {
+    test('Should be taken from specversion attribute', () => {
+      const specVersion = '0.3';
+      const body = copyBodyWithAttribute('specversion', specVersion);
+
+      const event = convertGooglePubSubMessage(headers, body);
+
+      expect(event.specversion).toBe(specVersion);
+    });
+
+    test('Should be default to 1.0 if absent', () => {
+      const body = copyBodyWithAttribute('specversion', undefined);
+
+      const event = convertGooglePubSubMessage(headers, body);
+
+      expect(event.specversion).toBe('1.0');
+    });
+  });
+
+  describe('Subject', () => {
+    test('Should be taken from subject attribute', () => {
+      const subject = 'my-subject';
+      const body = copyBodyWithAttribute('subject', subject);
+
+      const event = convertGooglePubSubMessage(headers, body);
+
+      expect(event.subject).toBe(subject);
+    });
+
+    test('Should be undefined if subject attribute is absent', () => {
+      const body = copyBodyWithAttribute('subject', undefined);
+
+      const event = convertGooglePubSubMessage(headers, body);
+
+      expect(event.subject).toBeUndefined();
+    });
+  });
+
+  describe('Data content type', () => {
+    test('Should be taken from datacontenttype attribute', () => {
+      const dataContentType = 'application/json';
+      const body = copyBodyWithAttribute('datacontenttype', dataContentType);
+
+      const event = convertGooglePubSubMessage(headers, body);
+
+      expect(event.datacontenttype).toBe(dataContentType);
+    });
+
+    test('Should be undefined if datacontenttype attribute is absent', () => {
+      const body = copyBodyWithAttribute('datacontenttype', undefined);
+
+      const event = convertGooglePubSubMessage(headers, body);
+
+      expect(event.datacontenttype).toBeUndefined();
+    });
+  });
+
+  describe('Data schema', () => {
+    test('Should be taken from dataschema attribute', () => {
+      const dataSchema = 'https://example.com/schema';
+      const body = copyBodyWithAttribute('dataschema', dataSchema);
+
+      const event = convertGooglePubSubMessage(headers, body);
+
+      expect(event.dataschema).toBe(dataSchema);
+    });
+
+    test('Should be undefined if dataschema attribute is absent', () => {
+      const body = copyBodyWithAttribute('dataschema', undefined);
+
+      const event = convertGooglePubSubMessage(headers, body);
+
+      expect(event.dataschema).toBeUndefined();
+    });
+  });
+
+  test('Extension attributes should be taken from message.attributes', () => {
+    const body = copyBodyWithAttribute('extension', 'value');
+
+    const event = convertGooglePubSubMessage(headers, body);
+
+    expect(event.extension).toBe('value');
+  });
+
+  test.each(['source', 'type'])(
+    'Message should be refused if attribute %s is missing',
+    (attributeName) => {
+      const body = copyBodyWithAttribute(attributeName, undefined);
+
+      expect(() => convertGooglePubSubMessage(headers, body)).toThrowWithMessage(
+        Error,
+        'Request body is not a valid PubSub message',
+      );
+    },
+  );
 });
