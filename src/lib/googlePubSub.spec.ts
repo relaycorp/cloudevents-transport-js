@@ -93,12 +93,7 @@ describe('makeGooglePubSubEmitter', () => {
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
-            attributes: expect.objectContaining({ ceSpecVersion: EVENT.specversion }),
-          }),
-        );
-        expect(mockPublishMessage).not.toHaveBeenCalledWith(
-          expect.objectContaining({
-            attributes: expect.objectContaining({ specversion: expect.anything() }),
+            attributes: expect.objectContaining({ specversion: EVENT.specversion }),
           }),
         );
       });
@@ -110,12 +105,7 @@ describe('makeGooglePubSubEmitter', () => {
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
-            attributes: expect.objectContaining({ ceDataSchema: event.dataschema }),
-          }),
-        );
-        expect(mockPublishMessage).not.toHaveBeenCalledWith(
-          expect.objectContaining({
-            attributes: expect.objectContaining({ dataschema: expect.anything() }),
+            attributes: expect.objectContaining({ dataschema: event.dataschema }),
           }),
         );
       });
@@ -125,7 +115,7 @@ describe('makeGooglePubSubEmitter', () => {
 
         expect(mockPublishMessage).not.toHaveBeenCalledWith(
           expect.objectContaining({
-            attributes: expect.objectContaining({ ceDataSchema: expect.anything() }),
+            attributes: expect.objectContaining({ dataschema: expect.anything() }),
           }),
         );
       });
@@ -137,12 +127,7 @@ describe('makeGooglePubSubEmitter', () => {
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
-            attributes: expect.objectContaining({ ceDataContentType: event.datacontenttype }),
-          }),
-        );
-        expect(mockPublishMessage).not.toHaveBeenCalledWith(
-          expect.objectContaining({
-            attributes: expect.objectContaining({ datacontenttype: expect.anything() }),
+            attributes: expect.objectContaining({ datacontenttype: event.datacontenttype }),
           }),
         );
       });
@@ -175,12 +160,7 @@ describe('makeGooglePubSubEmitter', () => {
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
-            attributes: expect.objectContaining({ ceSubject: event.subject }),
-          }),
-        );
-        expect(mockPublishMessage).not.toHaveBeenCalledWith(
-          expect.objectContaining({
-            attributes: expect.objectContaining({ subject: expect.anything() }),
+            attributes: expect.objectContaining({ subject: event.subject }),
           }),
         );
       });
@@ -190,7 +170,7 @@ describe('makeGooglePubSubEmitter', () => {
 
         expect(mockPublishMessage).not.toHaveBeenCalledWith(
           expect.objectContaining({
-            attributes: expect.objectContaining({ ceSubject: expect.anything() }),
+            attributes: expect.objectContaining({ subject: expect.anything() }),
           }),
         );
       });
@@ -200,12 +180,7 @@ describe('makeGooglePubSubEmitter', () => {
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
-            attributes: expect.objectContaining({ ceSource: EVENT.source }),
-          }),
-        );
-        expect(mockPublishMessage).not.toHaveBeenCalledWith(
-          expect.objectContaining({
-            attributes: expect.objectContaining({ source: expect.anything() }),
+            attributes: expect.objectContaining({ source: EVENT.source }),
           }),
         );
       });
@@ -215,23 +190,19 @@ describe('makeGooglePubSubEmitter', () => {
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
-            attributes: expect.objectContaining({ ceType: EVENT.type }),
-          }),
-        );
-        expect(mockPublishMessage).not.toHaveBeenCalledWith(
-          expect.objectContaining({
-            attributes: expect.objectContaining({ type: expect.anything() }),
+            attributes: expect.objectContaining({ type: EVENT.type }),
           }),
         );
       });
 
       test('Extension attributes should be stored as custom attributes', async () => {
-        const event = EVENT.cloneWith({ foo: 'bar' });
+        const extensionAttributes = { foo: 'bar' };
+        const event = EVENT.cloneWith(extensionAttributes);
 
         await makeGooglePubSubEmitter()(event);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
-          expect.objectContaining({ attributes: expect.objectContaining({ foo: event.foo }) }),
+          expect.objectContaining({ attributes: expect.objectContaining(extensionAttributes) }),
         );
       });
     });
