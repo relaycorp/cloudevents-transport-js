@@ -95,4 +95,4 @@ This transport doesn't actually use CloudEvents at all -- it simply converts the
 
 All other CloudEvents fields, including extensions, are mapped to PubSub attributes with the same name.
 
-The _channel_ passed to the emitter must be the PubSub topic where messages are to be published.
+The _channel_ passed to the emitter must be the name of the PubSub topic where messages are to be published.
