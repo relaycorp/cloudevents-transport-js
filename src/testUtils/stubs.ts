@@ -7,3 +7,7 @@ export const EVENT = new CloudEvent({
   data: Buffer.from('data'),
   datacontenttype: 'application/vnd.example',
 });
+
+export const CE_SINK_URL = 'https://sink.example.com/';
+
+export const GOOGLE_PUBSUB_TOPIC = 'the topic';

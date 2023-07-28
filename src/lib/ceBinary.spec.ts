@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 import type { Message } from 'cloudevents';
 
 import { getMockInstance, mockSpy } from '../testUtils/jest.js';
-import { EVENT } from '../testUtils/stubs.js';
+import { CE_SINK_URL, EVENT } from '../testUtils/stubs.js';
 import { dropStringPrefix } from '../testUtils/strings.js';
 
 const mockEmitterFor = mockSpy(jest.fn());
@@ -28,17 +28,15 @@ const { makeCeBinaryEmitter, convertCeBinaryMessage } = await import('./ceBinary
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const { emitterFor, httpTransport, Mode } = await import('cloudevents');
 
-const SINK_URL = 'https://sink.example.com/';
-
 describe('makeCeBinaryEmitter', () => {
   test('should create an HTTP transport with the sink URL', () => {
-    makeCeBinaryEmitter(SINK_URL);
+    makeCeBinaryEmitter(CE_SINK_URL);
 
-    expect(httpTransport).toHaveBeenCalledWith(SINK_URL);
+    expect(httpTransport).toHaveBeenCalledWith(CE_SINK_URL);
   });
 
   test('should create an HTTP transport with binary mode', () => {
-    makeCeBinaryEmitter(SINK_URL);
+    makeCeBinaryEmitter(CE_SINK_URL);
 
     expect(emitterFor).toHaveBeenCalledWith(mockHttpTransport, { mode: Mode.BINARY });
   });
@@ -47,7 +45,7 @@ describe('makeCeBinaryEmitter', () => {
     const mockEmitter = Symbol('mockEmitter');
     getMockInstance(emitterFor).mockReturnValue(mockEmitter);
 
-    const emitter = makeCeBinaryEmitter(SINK_URL);
+    const emitter = makeCeBinaryEmitter(CE_SINK_URL);
 
     expect(emitter).toBe(mockEmitter);
   });
