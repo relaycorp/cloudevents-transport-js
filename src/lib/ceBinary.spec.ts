@@ -1,10 +1,8 @@
 import { jest } from '@jest/globals';
 import type { Message } from 'cloudevents';
-import envVar from 'env-var';
 
-import { configureMockEnvVars } from '../testUtils/envVars.js';
 import { getMockInstance, mockSpy } from '../testUtils/jest.js';
-import { EVENT } from '../testUtils/stubs.js';
+import { CE_SINK_URL, EVENT } from '../testUtils/stubs.js';
 import { dropStringPrefix } from '../testUtils/strings.js';
 
 const mockEmitterFor = mockSpy(jest.fn());
@@ -30,31 +28,15 @@ const { makeCeBinaryEmitter, convertCeBinaryMessage } = await import('./ceBinary
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const { emitterFor, httpTransport, Mode } = await import('cloudevents');
 
-const K_SINK = 'https://sink.example.com/';
-
-const mockEnvVars = configureMockEnvVars({ K_SINK });
-
 describe('makeCeBinaryEmitter', () => {
-  test('should fail if K_SINK is not set', () => {
-    mockEnvVars({ K_SINK: undefined });
+  test('should create an HTTP transport with the sink URL', () => {
+    makeCeBinaryEmitter(CE_SINK_URL);
 
-    expect(makeCeBinaryEmitter).toThrowWithMessage(envVar.EnvVarError, /K_SINK/u);
-  });
-
-  test('should fail if K_SINK is not a valid URL', () => {
-    mockEnvVars({ K_SINK: 'not a URL' });
-
-    expect(makeCeBinaryEmitter).toThrowWithMessage(envVar.EnvVarError, /K_SINK/u);
-  });
-
-  test('should create an HTTP transport with the K_SINK URL', () => {
-    makeCeBinaryEmitter();
-
-    expect(httpTransport).toHaveBeenCalledWith(K_SINK);
+    expect(httpTransport).toHaveBeenCalledWith(CE_SINK_URL);
   });
 
   test('should create an HTTP transport with binary mode', () => {
-    makeCeBinaryEmitter();
+    makeCeBinaryEmitter(CE_SINK_URL);
 
     expect(emitterFor).toHaveBeenCalledWith(mockHttpTransport, { mode: Mode.BINARY });
   });
@@ -63,7 +45,7 @@ describe('makeCeBinaryEmitter', () => {
     const mockEmitter = Symbol('mockEmitter');
     getMockInstance(emitterFor).mockReturnValue(mockEmitter);
 
-    const emitter = makeCeBinaryEmitter();
+    const emitter = makeCeBinaryEmitter(CE_SINK_URL);
 
     expect(emitter).toBe(mockEmitter);
   });

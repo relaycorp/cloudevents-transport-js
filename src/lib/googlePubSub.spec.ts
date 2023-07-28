@@ -1,11 +1,9 @@
 import { jest } from '@jest/globals';
 import type { CloudEvent } from 'cloudevents';
 import { formatISO, getUnixTime, setMilliseconds } from 'date-fns';
-import envVar from 'env-var';
 
-import { configureMockEnvVars } from '../testUtils/envVars.js';
 import { mockSpy } from '../testUtils/jest.js';
-import { EVENT } from '../testUtils/stubs.js';
+import { GOOGLE_PUBSUB_TOPIC, EVENT } from '../testUtils/stubs.js';
 import { jsonSerialise } from '../testUtils/json.js';
 
 const mockPublishMessage = mockSpy(jest.fn<any>().mockResolvedValue(undefined));
@@ -18,16 +16,13 @@ jest.unstable_mockModule('@google-cloud/pubsub', () => ({
 }));
 const { makeGooglePubSubEmitter, convertGooglePubSubMessage } = await import('./googlePubSub.js');
 
-const CE_GPUBSUB_TOPIC = 'the topic';
-const mockEnvVars = configureMockEnvVars({ CE_GPUBSUB_TOPIC });
-
 describe('makeGooglePubSubEmitter', () => {
   describe('Message', () => {
     describe('Data', () => {
       test('Buffer should be passed on as is', async () => {
         expect(EVENT.data).toBeInstanceOf(Buffer);
 
-        await makeGooglePubSubEmitter()(EVENT);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({ data: EVENT.data }),
@@ -38,7 +33,7 @@ describe('makeGooglePubSubEmitter', () => {
         const event = EVENT.cloneWith({ data: 'data', datacontenttype: 'text/plain' });
         expect(event.data).toBeString();
 
-        await makeGooglePubSubEmitter()(event);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(event);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({ data: event.data }),
@@ -51,7 +46,7 @@ describe('makeGooglePubSubEmitter', () => {
           datacontenttype: 'application/json',
         });
 
-        await makeGooglePubSubEmitter()(event);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(event);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({ data: JSON.stringify(event.data) }),
@@ -60,7 +55,7 @@ describe('makeGooglePubSubEmitter', () => {
     });
 
     test('Id should be taken from CloudEvent id', async () => {
-      await makeGooglePubSubEmitter()(EVENT);
+      await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
       expect(mockPublishMessage).toHaveBeenCalledWith(
         expect.objectContaining({ messageId: EVENT.id }),
@@ -71,7 +66,7 @@ describe('makeGooglePubSubEmitter', () => {
       const eventTime = setMilliseconds(new Date(), 0);
       const event = EVENT.cloneWith({ time: formatISO(eventTime) });
 
-      await makeGooglePubSubEmitter()(event);
+      await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(event);
 
       expect(mockPublishMessage).toHaveBeenCalledWith(
         expect.objectContaining({ publishTime: { seconds: getUnixTime(eventTime) } }),
@@ -81,7 +76,7 @@ describe('makeGooglePubSubEmitter', () => {
     test('Publish time should be unset if absent from CloudEvent', async () => {
       const event = { ...EVENT, time: undefined };
 
-      await makeGooglePubSubEmitter()(event as CloudEvent<unknown>);
+      await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(event as CloudEvent<unknown>);
 
       expect(mockPublishMessage).toHaveBeenCalledWith(
         expect.objectContaining({ publishTime: undefined }),
@@ -90,7 +85,7 @@ describe('makeGooglePubSubEmitter', () => {
 
     describe('CloudEvents attributes unsupported by PubSub', () => {
       test('Spec version should be stored as custom attribute', async () => {
-        await makeGooglePubSubEmitter()(EVENT);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -102,7 +97,7 @@ describe('makeGooglePubSubEmitter', () => {
       test('Data schema should be stored as custom attribute if present', async () => {
         const event = EVENT.cloneWith({ dataschema: 'https://example.com/schema' });
 
-        await makeGooglePubSubEmitter()(event);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(event);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -112,7 +107,7 @@ describe('makeGooglePubSubEmitter', () => {
       });
 
       test('Data schema should not be stored as custom attribute if absent', async () => {
-        await makeGooglePubSubEmitter()(EVENT);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
         expect(mockPublishMessage).not.toHaveBeenCalledWith(
           expect.objectContaining({
@@ -124,7 +119,7 @@ describe('makeGooglePubSubEmitter', () => {
       test('Data content type should be stored as custom attribute', async () => {
         const event = EVENT.cloneWith({ datacontenttype: 'text/plain' });
 
-        await makeGooglePubSubEmitter()(event);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(event);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -134,7 +129,7 @@ describe('makeGooglePubSubEmitter', () => {
       });
 
       test('Data should not be set as a custom attribute', async () => {
-        await makeGooglePubSubEmitter()(EVENT);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
         expect(mockPublishMessage).not.toHaveBeenCalledWith(
           expect.objectContaining({
@@ -144,7 +139,7 @@ describe('makeGooglePubSubEmitter', () => {
       });
 
       test('Data base64 should not be set as a custom attribute', async () => {
-        await makeGooglePubSubEmitter()(EVENT);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
         expect(mockPublishMessage).not.toHaveBeenCalledWith(
           expect.objectContaining({
@@ -157,7 +152,7 @@ describe('makeGooglePubSubEmitter', () => {
       test('Subject should be stored as custom attribute', async () => {
         const event = EVENT.cloneWith({ subject: 'https://example.org' });
 
-        await makeGooglePubSubEmitter()(event);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(event);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -167,7 +162,7 @@ describe('makeGooglePubSubEmitter', () => {
       });
 
       test('Subject should not be stored as custom attribute if absent', async () => {
-        await makeGooglePubSubEmitter()(EVENT);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
         expect(mockPublishMessage).not.toHaveBeenCalledWith(
           expect.objectContaining({
@@ -177,7 +172,7 @@ describe('makeGooglePubSubEmitter', () => {
       });
 
       test('Source should be stored as custom attribute', async () => {
-        await makeGooglePubSubEmitter()(EVENT);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -187,7 +182,7 @@ describe('makeGooglePubSubEmitter', () => {
       });
 
       test('Type should be stored as custom attribute', async () => {
-        await makeGooglePubSubEmitter()(EVENT);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -200,7 +195,7 @@ describe('makeGooglePubSubEmitter', () => {
         const extensionAttributes = { foo: 'bar' };
         const event = EVENT.cloneWith(extensionAttributes);
 
-        await makeGooglePubSubEmitter()(event);
+        await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(event);
 
         expect(mockPublishMessage).toHaveBeenCalledWith(
           expect.objectContaining({ attributes: expect.objectContaining(extensionAttributes) }),
@@ -209,16 +204,10 @@ describe('makeGooglePubSubEmitter', () => {
     });
   });
 
-  test('Environment variable CE_GPUBSUB_TOPIC should be set', () => {
-    mockEnvVars({ CE_GPUBSUB_TOPIC: undefined });
+  test('Topic should be taken from the parameter', async () => {
+    await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
-    expect(makeGooglePubSubEmitter).toThrowWithMessage(envVar.EnvVarError, /CE_GPUBSUB_TOPIC/u);
-  });
-
-  test('Topic should be taken from environment variable CE_GPUBSUB_TOPIC', async () => {
-    await makeGooglePubSubEmitter()(EVENT);
-
-    expect(mockTopic).toHaveBeenCalledWith(CE_GPUBSUB_TOPIC);
+    expect(mockTopic).toHaveBeenCalledWith(GOOGLE_PUBSUB_TOPIC);
   });
 });
 

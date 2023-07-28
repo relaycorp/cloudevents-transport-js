@@ -1,5 +1,7 @@
 import { jest } from '@jest/globals';
 
+import { CE_SINK_URL, GOOGLE_PUBSUB_TOPIC } from '../testUtils/stubs.js';
+
 const mockCeBinaryEmitter = Symbol('mockCeBinaryEmitter');
 let wasCeImported = false;
 jest.unstable_mockModule('./ceBinary.js', () => {
@@ -25,24 +27,26 @@ describe('makeEmitter', () => {
     expect(wasCeImported).toBeFalse();
     expect(wasGooglePubSubImported).toBeFalse();
 
-    await makeEmitter('ce-http-binary');
+    await makeEmitter('ce-http-binary', CE_SINK_URL);
     expect(wasCeImported).toBeTrue();
     expect(wasGooglePubSubImported).toBeFalse();
 
-    await makeEmitter('google-pubsub');
+    await makeEmitter('google-pubsub', GOOGLE_PUBSUB_TOPIC);
     expect(wasGooglePubSubImported).toBeTrue();
   });
 
   test('CloudEvents binary emitter should be returned if requested', async () => {
-    await expect(makeEmitter('ce-http-binary')).resolves.toBe(mockCeBinaryEmitter);
+    await expect(makeEmitter('ce-http-binary', CE_SINK_URL)).resolves.toBe(mockCeBinaryEmitter);
   });
 
   test('Google PubSub emitter should be returned if requested', async () => {
-    await expect(makeEmitter('google-pubsub')).resolves.toBe(mockGooglePubSubEmitter);
+    await expect(makeEmitter('google-pubsub', GOOGLE_PUBSUB_TOPIC)).resolves.toBe(
+      mockGooglePubSubEmitter,
+    );
   });
 
   test('Unsupported transport should be refused', async () => {
-    await expect(makeEmitter('unsupported')).rejects.toThrowWithMessage(
+    await expect(makeEmitter('unsupported', 'foo')).rejects.toThrowWithMessage(
       Error,
       'Unsupported emitter type (unsupported)',
     );
