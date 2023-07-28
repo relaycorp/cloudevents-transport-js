@@ -15,7 +15,7 @@ import { makeEmitter } from '@relaycorp/cloudevents-transport';
 
 const transport = process.env.CE_TRANSPORT_NAME ?? 'ce-http-binary';
 const channel = process.env.CE_CHANNEL ?? 'https://cloudevents-broker.com';
-const emitter: EmitterFunction = await makeEmitter(transport);
+const emitter: EmitterFunction = await makeEmitter(transport, channel);
 ```
 
 Refer to the documentation of each transport below to learn about the structure channel parameter.
