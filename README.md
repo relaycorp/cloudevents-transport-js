@@ -7,15 +7,18 @@ This is a Node.js library to send/receive [CloudEvents](https://cloudevents.io) 
 
 ## Emitters
 
-To create an emitter, simply pass the name of the transport to the `makeEmitter` function. For example:
+To create an emitter, simply pass the name of the transport and the _channel_ to the `makeEmitter` function. For example:
 
 ```typescript
 import type { EmitterFunction } from 'cloudevents';
 import { makeEmitter } from '@relaycorp/cloudevents-transport';
 
 const transport = process.env.CE_TRANSPORT_NAME ?? 'ce-http-binary';
+const channel = process.env.CE_CHANNEL ?? 'https://cloudevents-broker.com';
 const emitter: EmitterFunction = await makeEmitter(transport);
 ```
+
+Refer to the documentation of each transport below to learn about the structure channel parameter.
 
 Then the `emitter` can be used as a regular `EmitterFunction` from the [`cloudevents`](https://www.npmjs.com/package/cloudevents) library. For example:
 
@@ -78,9 +81,7 @@ export async function registerEventReceiver(server: FastifyInstance): Promise<vo
 
 This is the standard CloudEvents HTTP transport, in binary mode.
 
-The emitter uses the following environment variables:
-
-- `K_SINK` (required): The URL of the CloudEvents endpoint that will receive the events.
+The _channel_ passed to the emitter must be the URL of the CloudEvents endpoint that will receive the events.
 
 ### google-pubsub
 
@@ -94,6 +95,4 @@ This transport doesn't actually use CloudEvents at all -- it simply converts the
 
 All other CloudEvents fields, including extensions, are mapped to PubSub attributes with the same name.
 
-The emitter uses the following environment variables:
-
-- `CE_GPUBSUB_TOPIC` (required): The PubSub topic where messages are to be published.
+The _channel_ passed to the emitter must be the PubSub topic where messages are to be published.

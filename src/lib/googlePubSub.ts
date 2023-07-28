@@ -2,7 +2,6 @@ import { PubSub } from '@google-cloud/pubsub';
 import { google } from '@google-cloud/pubsub/build/protos/protos.js';
 import { CloudEvent, type CloudEventV1, type EmitterFunction, type Headers } from 'cloudevents';
 import { getUnixTime } from 'date-fns';
-import envVar from 'env-var';
 
 import { compileSchema } from '../utils/ajv.js';
 
@@ -107,8 +106,7 @@ function convertEventToMessage(event: CloudEvent<unknown>): IPubsubMessage {
   };
 }
 
-export function makeGooglePubSubEmitter(): EmitterFunction {
-  const topicName = envVar.get('CE_GPUBSUB_TOPIC').required().asString();
+export function makeGooglePubSubEmitter(topicName: string): EmitterFunction {
   return async (event) => {
     const topic = CLIENT.topic(topicName);
     const message = convertEventToMessage(event);
