@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.6.1",
-    "@relaycorp/eslint-config": "^1.1.131",
+    "@relaycorp/eslint-config": "^1.1.134",
     "@relaycorp/shared-config": "^1.14.1",
     "@types/jest": "^29.5.3",
     "del-cli": "^5.0.0",
