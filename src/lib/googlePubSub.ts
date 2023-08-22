@@ -50,7 +50,7 @@ const pubSubBody = {
         publishTime: { type: 'string' },
       },
 
-      required: ['attributes', 'data', 'messageId', 'publishTime'],
+      required: ['attributes', 'messageId', 'publishTime'],
     },
   },
 
@@ -125,6 +125,7 @@ export function convertGooglePubSubMessage(_headers: Headers, body: Buffer): Clo
 
   if (isPubSubBody(bodyJson)) {
     const { message } = bodyJson;
+    const data = message.data === undefined ? undefined : Buffer.from(message.data!, 'base64');
     const extensionAttributes = filterExtensionAttributes(message.attributes);
     return new CloudEvent<Buffer>({
       specversion: message.attributes.specversion,
@@ -135,7 +136,7 @@ export function convertGooglePubSubMessage(_headers: Headers, body: Buffer): Clo
       time: message.publishTime,
       datacontenttype: message.attributes.datacontenttype,
       dataschema: message.attributes.dataschema,
-      data: Buffer.from(message.data, 'base64'),
+      data,
       ...extensionAttributes,
     });
   }

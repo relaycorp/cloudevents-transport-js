@@ -305,16 +305,20 @@ describe('convertGooglePubSubMessage', () => {
       expect(event.data).toMatchObject(EVENT.data!);
     });
 
-    test('Message should be refused if data is missing', () => {
-      const invalidRequestBody = {
+    test('Should be empty if data is missing', () => {
+      const body = {
         ...requestBody,
-        message: { ...requestBody.message, data: undefined },
-      };
-      const invalidRequestBodySerialised = jsonSerialise(invalidRequestBody);
 
-      expect(() =>
-        convertGooglePubSubMessage(headers, invalidRequestBodySerialised),
-      ).toThrowWithMessage(Error, 'Request body is not a valid PubSub message');
+        message: {
+          ...requestBody.message,
+          data: undefined,
+        },
+      };
+      const bodySerialised = jsonSerialise(body);
+
+      const event = convertGooglePubSubMessage(headers, bodySerialised);
+
+      expect(event.data).toBeUndefined();
     });
   });
 
