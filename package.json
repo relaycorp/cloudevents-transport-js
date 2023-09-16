@@ -44,7 +44,7 @@
     "json-schema-to-ts": "^2.9.2"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.4",
+    "@jest/globals": "^29.7.0",
     "@relaycorp/eslint-config": "^1.1.146",
     "@relaycorp/shared-config": "^1.14.1",
     "@types/jest": "^29.5.3",
