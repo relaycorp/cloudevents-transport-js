@@ -20,3 +20,18 @@ export function mockSpy<
 export function getMockInstance(mockedObject: any): jest.MockInstance<any, any> {
   return mockedObject as unknown as jest.MockInstance<any, any>;
 }
+
+export async function getPromiseRejection<ErrorType extends Error>(
+  rejectingFunction: () => Promise<unknown>,
+  expectedErrorType: new () => ErrorType,
+): Promise<ErrorType> {
+  let error: ErrorType | undefined;
+  try {
+    await rejectingFunction();
+  } catch (err) {
+    error = err as ErrorType;
+  }
+
+  expect(error).toBeInstanceOf(expectedErrorType);
+  return error!;
+}

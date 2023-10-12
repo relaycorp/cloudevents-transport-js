@@ -2,11 +2,11 @@ import { jest } from '@jest/globals';
 import type { CloudEvent } from 'cloudevents';
 import { formatISO, getUnixTime, setMilliseconds } from 'date-fns';
 
-import { mockSpy } from '../testUtils/jest.js';
+import { getPromiseRejection, mockSpy } from '../testUtils/jest.js';
 import { GOOGLE_PUBSUB_TOPIC, EVENT } from '../testUtils/stubs.js';
 import { jsonSerialise } from '../testUtils/json.js';
 
-const mockPublishMessage = mockSpy(jest.fn<any>().mockResolvedValue(undefined));
+const mockPublishMessage = mockSpy(jest.fn<any>());
 const mockTopic = jest.fn<any>().mockReturnValue({ publishMessage: mockPublishMessage });
 jest.unstable_mockModule('@google-cloud/pubsub', () => ({
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -208,6 +208,21 @@ describe('makeGooglePubSubEmitter', () => {
     await makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT);
 
     expect(mockTopic).toHaveBeenCalledWith(GOOGLE_PUBSUB_TOPIC);
+  });
+
+  test('Publish errors should be wrapped', async () => {
+    const error = new Error('Publish error');
+    mockPublishMessage.mockRejectedValue(error);
+
+    const errorWrapper = await getPromiseRejection(
+      async () => makeGooglePubSubEmitter(GOOGLE_PUBSUB_TOPIC)(EVENT),
+      Error,
+    );
+
+    expect(errorWrapper.message).toBe(
+      `Failed to publish message to Google PubSub topic "${GOOGLE_PUBSUB_TOPIC}"`,
+    );
+    expect(errorWrapper.cause).toBe(error);
   });
 });
 

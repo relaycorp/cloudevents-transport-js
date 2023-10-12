@@ -110,7 +110,14 @@ export function makeGooglePubSubEmitter(topicName: string): EmitterFunction {
   return async (event) => {
     const topic = CLIENT.topic(topicName);
     const message = convertEventToMessage(event);
-    await topic.publishMessage(message);
+    try {
+      await topic.publishMessage(message);
+    } catch (err) {
+      // Google SDK exceptions are utterly meaningless
+      throw new Error(`Failed to publish message to Google PubSub topic "${topicName}"`, {
+        cause: err,
+      });
+    }
   };
 }
 
