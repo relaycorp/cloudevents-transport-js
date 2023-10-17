@@ -3,7 +3,7 @@ import { google } from '@google-cloud/pubsub/build/protos/protos.js';
 import { CloudEvent, type CloudEventV1, type EmitterFunction, type Headers } from 'cloudevents';
 import { getUnixTime } from 'date-fns';
 
-import { compileSchema } from '../utils/ajv.js';
+import { compileSchema } from '../utils/ajv';
 
 import IPubsubMessage = google.pubsub.v1.IPubsubMessage;
 

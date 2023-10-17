@@ -7,7 +7,6 @@
     "url": "https://relaycorp.tech/"
   },
   "description": "Node.js library to send/receive CloudEvents over HTTP binary or any cloud-specific service like GCP PubSub",
-  "type": "module",
   "main": "build/lib/index.js",
   "typings": "build/lib/index.d.ts",
   "repository": "https://github.com/relaycorp/cloudevents-transport-js",

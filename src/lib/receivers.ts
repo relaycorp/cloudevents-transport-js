@@ -1,4 +1,4 @@
-import type { Receiver } from './Receiver.js';
+import type { Receiver } from './Receiver';
 
 export async function makeReceiver(transport: string): Promise<Receiver> {
   // Avoid import-time side effects (e.g., expensive API calls) by loading emitter functions lazily

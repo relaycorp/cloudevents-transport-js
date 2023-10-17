@@ -1,10 +1,10 @@
 import { jest } from '@jest/globals';
 
-import { CE_SINK_URL, GOOGLE_PUBSUB_TOPIC } from '../testUtils/stubs.js';
+import { CE_SINK_URL, GOOGLE_PUBSUB_TOPIC } from '../testUtils/stubs';
 
 const mockCeBinaryEmitter = Symbol('mockCeBinaryEmitter');
 let wasCeImported = false;
-jest.unstable_mockModule('./ceBinary.js', () => {
+jest.mock<any>('./ceBinary', () => {
   wasCeImported = true;
   return {
     makeCeBinaryEmitter: jest.fn().mockReturnValue(mockCeBinaryEmitter),
@@ -13,14 +13,15 @@ jest.unstable_mockModule('./ceBinary.js', () => {
 
 const mockGooglePubSubEmitter = Symbol('mockGooglePubSubEmitter');
 let wasGooglePubSubImported = false;
-jest.unstable_mockModule('./googlePubSub.ts', () => {
+jest.mock<any>('./googlePubSub', () => {
   wasGooglePubSubImported = true;
   return {
     makeGooglePubSubEmitter: jest.fn().mockReturnValue(mockGooglePubSubEmitter),
   };
 });
 
-const { makeEmitter } = await import('./emitters.js');
+// eslint-disable-next-line import/first
+import { makeEmitter } from './emitters';
 
 describe('makeEmitter', () => {
   test('Transports should be loaded lazily', async () => {
