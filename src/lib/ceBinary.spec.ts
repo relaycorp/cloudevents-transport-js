@@ -1,32 +1,42 @@
 import { jest } from '@jest/globals';
 import type { Message } from 'cloudevents';
 
-import { getMockInstance, mockSpy } from '../testUtils/jest.js';
-import { CE_SINK_URL, EVENT } from '../testUtils/stubs.js';
-import { dropStringPrefix } from '../testUtils/strings.js';
+import { getMockInstance, mockSpy } from '../testUtils/jest';
+import { dropStringPrefix } from '../testUtils/strings';
 
 const mockEmitterFor = mockSpy(jest.fn());
 const mockHttpTransport = Symbol('mockHttpTransport');
-jest.unstable_mockModule('cloudevents', () => ({
-  emitterFor: jest.fn<any>().mockReturnValue(mockEmitterFor),
-  httpTransport: jest.fn<any>().mockReturnValue(mockHttpTransport),
+jest.mock<any>('cloudevents', () => {
+  const actualCloudevents = jest.requireActual<any>('cloudevents');
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return {
+    ...actualCloudevents,
+    emitterFor: jest.fn<any>().mockReturnValue(mockEmitterFor),
+    httpTransport: jest.fn<any>().mockReturnValue(mockHttpTransport),
 
-  HTTP: {
-    toEvent: (message: Message) => {
-      const attributes = Object.entries(message.headers).reduce((acc, [key, value]) => {
-        const attributeName = dropStringPrefix(key, 'ce-');
-        return { ...acc, [attributeName]: value };
-      }, {});
-      return { ...attributes, data: message.body };
+    HTTP: {
+      toEvent: (message: Message) => {
+        const attributes = Object.entries(message.headers).reduce((acc, [key, value]) => {
+          const attributeName = dropStringPrefix(key, 'ce-');
+          return { ...acc, [attributeName]: value };
+        }, {});
+        return { ...attributes, data: message.body };
+      },
     },
-  },
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  Mode: { BINARY: 'binary' },
-}));
-const { makeCeBinaryEmitter, convertCeBinaryMessage } = await import('./ceBinary.js');
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const { emitterFor, httpTransport, Mode } = await import('cloudevents');
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    Mode: { BINARY: 'binary' },
+  };
+});
+
+// eslint-disable-next-line import/first,import/order,no-duplicate-imports
+import { emitterFor, httpTransport, Mode } from 'cloudevents';
+
+// eslint-disable-next-line import/first
+import { CE_SINK_URL, EVENT } from '../testUtils/stubs';
+
+// eslint-disable-next-line import/first
+import { makeCeBinaryEmitter, convertCeBinaryMessage } from './ceBinary';
 
 describe('makeCeBinaryEmitter', () => {
   test('should create an HTTP transport with the sink URL', () => {

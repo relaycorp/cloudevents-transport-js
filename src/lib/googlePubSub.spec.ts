@@ -2,19 +2,20 @@ import { jest } from '@jest/globals';
 import type { CloudEvent } from 'cloudevents';
 import { formatISO, getUnixTime, setMilliseconds } from 'date-fns';
 
-import { getPromiseRejection, mockSpy } from '../testUtils/jest.js';
-import { GOOGLE_PUBSUB_TOPIC, EVENT } from '../testUtils/stubs.js';
-import { jsonSerialise } from '../testUtils/json.js';
+import { getPromiseRejection, mockSpy } from '../testUtils/jest';
+import { GOOGLE_PUBSUB_TOPIC, EVENT } from '../testUtils/stubs';
+import { jsonSerialise } from '../testUtils/json';
 
 const mockPublishMessage = mockSpy(jest.fn<any>());
 const mockTopic = jest.fn<any>().mockReturnValue({ publishMessage: mockPublishMessage });
-jest.unstable_mockModule('@google-cloud/pubsub', () => ({
+jest.mock<any>('@google-cloud/pubsub', () => ({
   // eslint-disable-next-line @typescript-eslint/naming-convention
   PubSub: jest.fn<any>().mockReturnValue({
     topic: mockTopic,
   }),
 }));
-const { makeGooglePubSubEmitter, convertGooglePubSubMessage } = await import('./googlePubSub.js');
+// eslint-disable-next-line import/first
+import { makeGooglePubSubEmitter, convertGooglePubSubMessage } from './googlePubSub';
 
 describe('makeGooglePubSubEmitter', () => {
   describe('Message', () => {

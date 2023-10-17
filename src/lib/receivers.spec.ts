@@ -2,21 +2,22 @@ import { jest } from '@jest/globals';
 
 const mockCeBinaryConverter = Symbol('mockCeBinaryConverter');
 let wasCeImported = false;
-jest.unstable_mockModule('./ceBinary.js', () => {
+jest.mock<any>('./ceBinary', () => {
   wasCeImported = true;
   return { convertCeBinaryMessage: mockCeBinaryConverter };
 });
 
 const mockGooglePubSubConverter = Symbol('mockGooglePubSubConverter');
 let wasGooglePubSubImported = false;
-jest.unstable_mockModule('./googlePubSub.ts', () => {
+jest.mock<any>('./googlePubSub', () => {
   wasGooglePubSubImported = true;
   return {
     convertGooglePubSubMessage: mockGooglePubSubConverter,
   };
 });
 
-const { makeReceiver } = await import('./receivers.js');
+// eslint-disable-next-line import/first
+import { makeReceiver } from './receivers';
 
 describe('makeReceiver', () => {
   test('Transports should be load lazily', async () => {
