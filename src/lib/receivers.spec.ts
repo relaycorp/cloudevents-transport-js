@@ -17,7 +17,7 @@ jest.mock<any>('./googlePubSub', () => {
 });
 
 // eslint-disable-next-line import/first
-import { makeReceiver } from './receivers.js';
+import { makeReceiver } from './receivers';
 
 describe('makeReceiver', () => {
   test('Transports should be load lazily', async () => {
