@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@google-cloud/pubsub": "^4.4.1",
-    "ajv": "^8.13.0",
+    "ajv": "^8.14.0",
     "cloudevents": "< 9",
     "date-fns": "^3.6.0",
     "json-schema-to-ts": "^3.1.0"
